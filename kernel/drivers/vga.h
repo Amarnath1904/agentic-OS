@@ -31,6 +31,7 @@ void vga_set_color(u8 fg, u8 bg);
 void vga_putchar(char c);
 void vga_print(const char* str);
 void vga_set_cursor(u32 x, u32 y);
+void vga_backspace(void);
 
 #endif /* VGA_H */
 

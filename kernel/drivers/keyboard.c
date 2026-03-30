@@ -5,10 +5,10 @@
 
 #include "keyboard.h"
 #include "../kernel.h"
+#include "../io.h"
 
 /* Forward declarations */
 static char scancode_to_char(u8 scancode);
-static u8 inb(u16 port);
 
 #define KEYBOARD_DATA_PORT 0x60
 #define KEYBOARD_STATUS_PORT 0x64
@@ -70,17 +70,6 @@ char keyboard_read(void)
  * ============================================ */
 static char scancode_to_char(u8 scancode)
 {
-    /* Basic scancode map */
-    const char* map = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"  /* 0x00-0x0F */
-                      "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"  /* 0x10-0x1F */
-                      "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"  /* 0x20-0x2F */
-                      "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"  /* 0x30-0x3F */
-                      "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"  /* 0x40-0x4F */
-                      "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"  /* 0x50-0x5F */
-                      "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"  /* 0x60-0x6F */
-                      "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"; /* 0x70-0x7F */
-    
-    /* Simple mapping for common keys */
     switch (scancode) {
         case 0x1E: return 'a';
         case 0x30: return 'b';
@@ -124,14 +113,3 @@ static char scancode_to_char(u8 scancode)
         default: return 0;
     }
 }
-
-/* ============================================
- * Port I/O Functions
- * ============================================ */
-static u8 inb(u16 port)
-{
-    u8 value;
-    asm volatile("inb %1, %0" : "=a"(value) : "Nd"(port));
-    return value;
-}
-

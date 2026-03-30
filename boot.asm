@@ -1,6 +1,13 @@
 [BITS 16]
 [ORG 0x7c00]
 
+; Number of 512-byte sectors to load after the MBR (must cover full kernel.bin).
+; build.sh passes -DKERNEL_SECTORS=N after linking kernel.bin.
+%ifndef KERNEL_SECTORS
+%define KERNEL_SECTORS 80
+%warning KERNEL_SECTORS not set; default 80 — run build.sh so the count matches kernel.bin
+%endif
+
 ; ============================================
 ; BOOTLOADER - Loads kernel and switches to PM
 ; ============================================
@@ -53,44 +60,46 @@ print_done:
     ret
 
 ; ============================================
-; MODULE: Disk Loading
+; MODULE: Disk Loading (INT 13h AH=42 LBA read)
+; Loads kernel to physical 0x10000 (segment 0x1000:0). First kernel LBA = 1.
 ; ============================================
 load_kernel:
     pusha
     
-    ; Reset disk system first
-    mov ah, 0x00    ; Reset disk
-    mov dl, 0x80    ; Drive 0x80 (first hard disk)
+    mov ah, 0x00
+    mov dl, 0x80
     int 0x13
     jc disk_error
     
-    ; Kernel will be loaded at 0x10000 (64KB)
-    ; We'll load it to ES:BX = 0x1000:0x0000
-    mov ax, 0x1000
-    mov es, ax
-    mov bx, 0x0000
+    ; Extended disk read (EDD) — required for kernels larger than one sector
+    mov ah, 0x41
+    mov bx, 0x55AA
+    mov dl, 0x80
+    int 0x13
+    jc disk_error_ext
+    cmp bx, 0xAA55
+    jne disk_error_ext
     
-    ; Read from sector 2 (after boot sector)
-    ; With geometry 1/1/2: cylinder 0, head 0, sector 2
-    ; Read 1 sector (kernel is 512 bytes = 1 sector)
-    mov ah, 0x02    ; Read sectors
-    mov al, 1       ; Number of sectors to read
-    mov ch, 0       ; Cylinder 0
-    mov cl, 2       ; Sector 2 (1-indexed, so 2 is valid)
-    mov dh, 0       ; Head 0
-    mov dl, 0x80    ; Drive 0x80 (first hard disk)
-    
+    mov si, dap
+    mov ah, 0x42
+    mov dl, 0x80
     int 0x13
     jc disk_error
     
     popa
     ret
 
+disk_error_ext:
+    mov si, no_ext_msg
+    call print_string
+    jmp disk_error_halt
+
 disk_error:
     mov si, disk_error_msg
     call print_string
+disk_error_halt:
     hlt
-    jmp disk_error
+    jmp disk_error_halt
 
 ; ============================================
 ; MODULE: A20 Line Enable
@@ -216,6 +225,17 @@ start_protected_mode:
 [BITS 16]
 loading_msg:        db "Loading kernel...", 13, 10, 0
 disk_error_msg:     db "Disk read error!", 13, 10, 0
+no_ext_msg:         db "BIOS INT13 extensions required.", 13, 10, 0
+
+; Disk Address Packet for INT 13h AH=42
+dap:
+    db 0x10                    ; packet size
+    db 0
+    dw KERNEL_SECTORS          ; sectors to read
+    ; DAP "address" = (segment << 16) | offset — NOT linear! 0x1000:0 => 0x10000000
+    dd 0x10000000              ; 0x1000:0x0000 -> physical 0x10000
+    dd 1                       ; start LBA (low) — sector after MBR
+    dd 0                       ; start LBA (high)
 
 ; Boot sector padding and signature
 times (0x1be-($-$$)) db 0

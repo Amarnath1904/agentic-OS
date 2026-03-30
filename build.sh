@@ -16,10 +16,6 @@ fi
 
 echo "Building hardened kernel core..."
 
-# Build bootloader
-echo "Building bootloader..."
-nasm -f bin -o boot.bin boot.asm
-
 # Build kernel entry (assembly)
 echo "Building kernel entry..."
 nasm -f elf32 -o kernel/entry.o kernel/entry.asm
@@ -41,65 +37,84 @@ echo "Building C kernel files..."
 
 # Kernel core
 i686-elf-gcc -c kernel/kernel.c -o kernel/kernel.o \
-    -std=gnu99 -ffreestanding -O2 -Wall -Wextra -fstack-protector \
+    -std=gnu99 -ffreestanding -O2 -Wall -Wextra -fno-stack-protector \
     -I. -Ikernel
 
 # IDT setup
 i686-elf-gcc -c kernel/idt.c -o kernel/idt.o \
-    -std=gnu99 -ffreestanding -O2 -Wall -Wextra -fstack-protector \
+    -std=gnu99 -ffreestanding -O2 -Wall -Wextra -fno-stack-protector \
     -I. -Ikernel
 
 # Interrupt handlers
 i686-elf-gcc -c kernel/interrupts.c -o kernel/interrupts_c.o \
-    -std=gnu99 -ffreestanding -O2 -Wall -Wextra -fstack-protector \
+    -std=gnu99 -ffreestanding -O2 -Wall -Wextra -fno-stack-protector \
+    -I. -Ikernel
+
+# PIC
+i686-elf-gcc -c kernel/interrupts/pic.c -o kernel/interrupts/pic.o \
+    -std=gnu99 -ffreestanding -O2 -Wall -Wextra -fno-stack-protector \
+    -I. -Ikernel
+
+# Line input
+i686-elf-gcc -c kernel/io/line_input.c -o kernel/io/line_input.o \
+    -std=gnu99 -ffreestanding -O2 -Wall -Wextra -fno-stack-protector \
+    -I. -Ikernel
+
+# Login
+i686-elf-gcc -c kernel/auth/login.c -o kernel/auth/login.o \
+    -std=gnu99 -ffreestanding -O2 -Wall -Wextra -fno-stack-protector \
     -I. -Ikernel
 
 # Memory manager
 i686-elf-gcc -c kernel/memory/memory.c -o kernel/memory/memory.o \
-    -std=gnu99 -ffreestanding -O2 -Wall -Wextra -fstack-protector \
+    -std=gnu99 -ffreestanding -O2 -Wall -Wextra -fno-stack-protector \
     -I. -Ikernel
 
 i686-elf-gcc -c kernel/memory/paging.c -o kernel/memory/paging.o \
-    -std=gnu99 -ffreestanding -O2 -Wall -Wextra -fstack-protector \
+    -std=gnu99 -ffreestanding -O2 -Wall -Wextra -fno-stack-protector \
     -I. -Ikernel
 
 # Scheduler
 i686-elf-gcc -c kernel/scheduler/scheduler.c -o kernel/scheduler/scheduler.o \
-    -std=gnu99 -ffreestanding -O2 -Wall -Wextra -fstack-protector \
+    -std=gnu99 -ffreestanding -O2 -Wall -Wextra -fno-stack-protector \
     -I. -Ikernel
 
 # Syscalls
 i686-elf-gcc -c kernel/syscalls/syscall.c -o kernel/syscalls/syscall_c.o \
-    -std=gnu99 -ffreestanding -O2 -Wall -Wextra -fstack-protector \
+    -std=gnu99 -ffreestanding -O2 -Wall -Wextra -fno-stack-protector \
     -I. -Ikernel
 
 # Drivers
 i686-elf-gcc -c kernel/drivers/vga.c -o kernel/drivers/vga.o \
-    -std=gnu99 -ffreestanding -O2 -Wall -Wextra -fstack-protector \
+    -std=gnu99 -ffreestanding -O2 -Wall -Wextra -fno-stack-protector \
     -I. -Ikernel
 
 i686-elf-gcc -c kernel/drivers/keyboard.c -o kernel/drivers/keyboard.o \
-    -std=gnu99 -ffreestanding -O2 -Wall -Wextra -fstack-protector \
+    -std=gnu99 -ffreestanding -O2 -Wall -Wextra -fno-stack-protector \
     -I. -Ikernel
 
 # Security
 i686-elf-gcc -c kernel/security/stack_guard.c -o kernel/security/stack_guard.o \
-    -std=gnu99 -ffreestanding -O2 -Wall -Wextra -fstack-protector \
+    -std=gnu99 -ffreestanding -O2 -Wall -Wextra -fno-stack-protector \
     -I. -Ikernel
 
 i686-elf-gcc -c kernel/security/bounds_check.c -o kernel/security/bounds_check.o \
-    -std=gnu99 -ffreestanding -O2 -Wall -Wextra -fstack-protector \
+    -std=gnu99 -ffreestanding -O2 -Wall -Wextra -fno-stack-protector \
     -I. -Ikernel
 
-# Link kernel
+# Link kernel (ELF) then produce a flat binary — the bootloader copies raw bytes to 0x10000; an ELF
+# header at 0x10000 executes wrong instructions and breaks paging/IDT state.
 echo "Linking kernel..."
-i686-elf-gcc -T linker.ld -o kernel.bin -ffreestanding -O2 -nostdlib \
+i686-elf-gcc -T linker.ld -o kernel.elf -ffreestanding -O2 -nostdlib \
     kernel/entry.o \
     kernel/gdt.o \
     kernel/interrupts.o \
     kernel/kernel.o \
     kernel/idt.o \
     kernel/interrupts_c.o \
+    kernel/interrupts/pic.o \
+    kernel/io/line_input.o \
+    kernel/auth/login.o \
     kernel/memory/memory.o \
     kernel/memory/paging.o \
     kernel/scheduler/scheduler.o \
@@ -110,6 +125,18 @@ i686-elf-gcc -T linker.ld -o kernel.bin -ffreestanding -O2 -nostdlib \
     kernel/security/stack_guard.o \
     kernel/security/bounds_check.o \
     -lgcc
+
+echo "Creating flat kernel.bin (strip ELF headers)..."
+i686-elf-objcopy -O binary kernel.elf kernel.bin
+
+# Boot sector must load the full kernel (was 1 sector — too small, causes triple-fault / BIOS loop)
+KERNEL_BYTES=$(wc -c < kernel.bin | tr -d ' ')
+KERNEL_SECTORS=$(( (KERNEL_BYTES + 511) / 512 ))
+if [ "$KERNEL_SECTORS" -lt 1 ]; then
+    KERNEL_SECTORS=1
+fi
+echo "Building bootloader (load $KERNEL_BYTES byte kernel = $KERNEL_SECTORS sectors)..."
+nasm -f bin -o boot.bin -DKERNEL_SECTORS=$KERNEL_SECTORS boot.asm
 
 # Remove old image if it exists
 rm -f boot.img

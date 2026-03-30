@@ -7,6 +7,9 @@
 #include "memory/memory.h"
 #include "scheduler/scheduler.h"
 #include "drivers/vga.h"
+#include "drivers/keyboard.h"
+#include "interrupts/pic.h"
+#include "auth/login.h"
 
 /* Forward declarations */
 void kernel_loop(void);
@@ -36,6 +39,8 @@ void kmain(void)
     vga_print("Initialization complete.\n");
     vga_print("System ready.\n");
     
+    login_run();
+    
     /* Main kernel loop */
     kernel_loop();
 }
@@ -45,10 +50,8 @@ void kmain(void)
  * ============================================ */
 void init_hardware(void)
 {
-    /* Initialize VGA */
     vga_init();
-    
-    /* TODO: Initialize other hardware */
+    keyboard_init();
 }
 
 /* ============================================
@@ -66,6 +69,8 @@ void init_interrupts(void)
     /* Set up IDT */
     init_idt_setup();
     idt_flush();
+    
+    pic_init();
 }
 
 /* ============================================
@@ -81,15 +86,6 @@ void init_memory(void)
     
     /* Initialize paging */
     init_paging();
-}
-
-/* ============================================
- * Scheduler Initialization
- * ============================================ */
-void init_scheduler(void)
-{
-    /* Scheduler will be initialized here */
-    /* This is a placeholder */
 }
 
 /* ============================================

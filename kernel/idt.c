@@ -37,7 +37,8 @@ void idt_set_gate(u8 num, u32 base, u16 selector, u8 flags)
     idt[num].base_high = (base >> 16) & 0xFFFF;
     idt[num].selector = selector;
     idt[num].always0 = 0;
-    idt[num].flags = flags | 0x60;  /* Set present bit and DPL=0 */
+    /* Use flags as-is: 0x8E = 32-bit interrupt gate, DPL=0; 0xEE = trap, DPL=3. */
+    idt[num].flags = flags;
 }
 
 /* ============================================

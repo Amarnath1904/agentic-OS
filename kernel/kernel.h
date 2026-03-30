@@ -26,7 +26,9 @@ typedef int64_t  i64;
 /* ============================================
  * Constants
  * ============================================ */
+#ifndef NULL
 #define NULL ((void*)0)
+#endif
 #define UNUSED(x) ((void)(x))
 
 /* Memory addresses */

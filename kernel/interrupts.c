@@ -4,10 +4,9 @@
  * ============================================ */
 
 #include "kernel.h"
+#include "io.h"
 #include "drivers/keyboard.h"
 
-/* Forward declarations */
-static void outb(u16 port, u8 value);
 extern void panic(const char* message);
 
 /* ============================================

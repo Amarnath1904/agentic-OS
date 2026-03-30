@@ -26,9 +26,10 @@ extern void* kmalloc(u32 size, u8 flags);
 #define PAGE_SIZE_4M  0x080
 #define PAGE_GLOBAL   0x100
 
-/* Page directory and tables */
+/* Page directory and tables (two 4 MiB identity blocks: 0–4 MiB and 4–8 MiB for heap) */
 u32 page_directory[1024] __attribute__((aligned(4096)));
-u32 page_table[1024] __attribute__((aligned(4096)));
+u32 page_table_low[1024] __attribute__((aligned(4096)));
+u32 page_table_high[1024] __attribute__((aligned(4096)));
 
 /* ============================================
  * Initialize Paging
@@ -40,16 +41,15 @@ void init_paging(void)
         page_directory[i] = 0;
     }
     
-    /* Identity map first 4MB */
     for (u32 i = 0; i < 1024; i++) {
-        page_table[i] = (i * PAGE_SIZE) | PAGE_PRESENT | PAGE_WRITE;
+        page_table_low[i] = (i * PAGE_SIZE) | PAGE_PRESENT | PAGE_WRITE;
+        page_table_high[i] = (0x400000 + i * PAGE_SIZE) | PAGE_PRESENT | PAGE_WRITE;
     }
+
+    page_directory[0] = ((u32)page_table_low) | PAGE_PRESENT | PAGE_WRITE | PAGE_USER;
+    page_directory[1] = ((u32)page_table_high) | PAGE_PRESENT | PAGE_WRITE | PAGE_USER;
     
-    /* Set page directory entry */
-    page_directory[0] = ((u32)page_table) | PAGE_PRESENT | PAGE_WRITE | PAGE_USER;
-    
-    /* Fill rest of page directory with 0 */
-    for (u32 i = 1; i < 1024; i++) {
+    for (u32 i = 2; i < 1024; i++) {
         page_directory[i] = 0;
     }
     

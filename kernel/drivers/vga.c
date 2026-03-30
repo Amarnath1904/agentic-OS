@@ -5,6 +5,7 @@
 
 #include "vga.h"
 #include "../kernel.h"
+#include "../io.h"
 
 #define VGA_MEMORY 0xB8000
 #define VGA_WIDTH  80
@@ -96,6 +97,28 @@ void vga_putchar(char c)
 }
 
 /* ============================================
+ * Backspace: erase previous cell, move cursor back
+ * ============================================ */
+void vga_backspace(void)
+{
+    u16* video = (u16*)VGA_MEMORY;
+    u16 blank = (vga_color << 8) | ' ';
+
+    if (vga_cursor_x > 0) {
+        vga_cursor_x--;
+    } else if (vga_cursor_y > 0) {
+        vga_cursor_y--;
+        vga_cursor_x = VGA_WIDTH - 1;
+    } else {
+        return;
+    }
+
+    u32 index = vga_cursor_y * VGA_WIDTH + vga_cursor_x;
+    video[index] = blank;
+    vga_set_cursor(vga_cursor_x, vga_cursor_y);
+}
+
+/* ============================================
  * Print String
  * ============================================ */
 void vga_print(const char* str)
@@ -129,12 +152,3 @@ void vga_set_cursor(u32 x, u32 y)
     outb(0x3D4, 0x0E);
     outb(0x3D5, (u8)((pos >> 8) & 0xFF));
 }
-
-/* ============================================
- * Port I/O Functions
- * ============================================ */
-static void outb(u16 port, u8 value)
-{
-    asm volatile("outb %0, %1" :: "a"(value), "Nd"(port));
-}
-

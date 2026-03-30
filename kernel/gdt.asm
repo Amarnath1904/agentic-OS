@@ -66,14 +66,6 @@ gdt_start:
     db 11110010b    ; Access: Present=1, DPL=11, Code=0, Expand down=0, Writable=1, Accessed=0
     db 11001111b    ; Flags
     db 0x00         ; Base
-    
-    ; TSS segment (0x28) - For task switching
-    dw 0x0068       ; Limit (104 bytes for TSS)
-    dw tss_base     ; Base (low 16 bits)
-    db 0x00         ; Base (bits 16-23)
-    db 10001001b    ; Access: Present=1, DPL=00, Type=1001 (32-bit TSS)
-    db 00000000b    ; Flags: Granularity=0, Limit (bits 16-19)=0000
-    db 0x00         ; Base (bits 24-31)
 
 gdt_end:
 
@@ -81,7 +73,3 @@ gdt_end:
 gdt_ptr:
     dw gdt_end - gdt_start - 1  ; Size of GDT
     dd gdt_start                 ; Start address of GDT
-
-; TSS base address (placeholder, will be set up later)
-tss_base: dd 0
-
