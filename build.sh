@@ -65,6 +65,39 @@ i686-elf-gcc -c kernel/auth/login.c -o kernel/auth/login.o \
     -std=gnu99 -ffreestanding -O2 -Wall -Wextra -fno-stack-protector \
     -I. -Ikernel
 
+# String utilities
+i686-elf-gcc -c kernel/string/kstring.c -o kernel/string/kstring.o \
+    -std=gnu99 -ffreestanding -O2 -Wall -Wextra -fno-stack-protector \
+    -I. -Ikernel
+
+# RAM filesystem
+i686-elf-gcc -c kernel/fs/ramfs/path.c -o kernel/fs/ramfs/path.o \
+    -std=gnu99 -ffreestanding -O2 -Wall -Wextra -fno-stack-protector \
+    -I. -Ikernel
+
+i686-elf-gcc -c kernel/fs/ramfs/ramfs.c -o kernel/fs/ramfs/ramfs.o \
+    -std=gnu99 -ffreestanding -O2 -Wall -Wextra -fno-stack-protector \
+    -I. -Ikernel
+
+# Shell
+i686-elf-gcc -c kernel/shell/shell.c -o kernel/shell/shell.o \
+    -std=gnu99 -ffreestanding -O2 -Wall -Wextra -fno-stack-protector \
+    -I. -Ikernel
+
+# Networking (NE2000 + minimal TCP probe)
+i686-elf-gcc -c kernel/net/net.c -o kernel/net/net.o \
+    -std=gnu99 -ffreestanding -O2 -Wall -Wextra -fno-stack-protector \
+    -I. -Ikernel
+i686-elf-gcc -c kernel/net/ne2k.c -o kernel/net/ne2k.o \
+    -std=gnu99 -ffreestanding -O2 -Wall -Wextra -fno-stack-protector \
+    -I. -Ikernel
+i686-elf-gcc -c kernel/net/ipv4.c -o kernel/net/ipv4.o \
+    -std=gnu99 -ffreestanding -O2 -Wall -Wextra -fno-stack-protector \
+    -I. -Ikernel
+i686-elf-gcc -c kernel/net/tcp_probe.c -o kernel/net/tcp_probe.o \
+    -std=gnu99 -ffreestanding -O2 -Wall -Wextra -fno-stack-protector \
+    -I. -Ikernel
+
 # Memory manager
 i686-elf-gcc -c kernel/memory/memory.c -o kernel/memory/memory.o \
     -std=gnu99 -ffreestanding -O2 -Wall -Wextra -fno-stack-protector \
@@ -115,6 +148,14 @@ i686-elf-gcc -T linker.ld -o kernel.elf -ffreestanding -O2 -nostdlib \
     kernel/interrupts/pic.o \
     kernel/io/line_input.o \
     kernel/auth/login.o \
+    kernel/string/kstring.o \
+    kernel/fs/ramfs/path.o \
+    kernel/fs/ramfs/ramfs.o \
+    kernel/shell/shell.o \
+    kernel/net/net.o \
+    kernel/net/ne2k.o \
+    kernel/net/ipv4.o \
+    kernel/net/tcp_probe.o \
     kernel/memory/memory.o \
     kernel/memory/paging.o \
     kernel/scheduler/scheduler.o \

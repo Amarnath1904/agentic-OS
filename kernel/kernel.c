@@ -10,6 +10,9 @@
 #include "drivers/keyboard.h"
 #include "interrupts/pic.h"
 #include "auth/login.h"
+#include "fs/ramfs/ramfs.h"
+#include "shell/shell.h"
+#include "net/net.h"
 
 /* Forward declarations */
 void kernel_loop(void);
@@ -40,7 +43,16 @@ void kmain(void)
     vga_print("System ready.\n");
     
     login_run();
-    
+
+    if (!net_init()) {
+        vga_print("net: ne2k init failed\n");
+    } else {
+        vga_print("net: ne2k ready (edit kernel/net/net_config.h if needed)\n");
+    }
+
+    ramfs_init();
+    shell_run();
+
     /* Main kernel loop */
     kernel_loop();
 }

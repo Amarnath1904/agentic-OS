@@ -107,6 +107,18 @@ static char scancode_to_char(u8 scancode)
         case 0x08: return '7';
         case 0x09: return '8';
         case 0x0A: return '9';
+        /* Punctuation (US QWERTY, PS/2 Set 1, unshifted) */
+        case 0x33: return ',';
+        case 0x34: return '.';
+        case 0x35: return '/';
+        case 0x0C: return '-';
+        case 0x0D: return '=';
+        case 0x1A: return '[';
+        case 0x1B: return ']';
+        case 0x2B: return '\\';
+        case 0x27: return ';';
+        case 0x28: return '\'';
+        case 0x29: return '`';
         case 0x1C: return '\n';  /* Enter */
         case 0x0E: return '\b';  /* Backspace */
         case 0x39: return ' ';   /* Space */
