@@ -15,4 +15,9 @@ static inline u8 inb(u16 port)
     return ret;
 }
 
+static inline void outw(u16 port, u16 value)
+{
+    asm volatile("outw %0, %1" :: "a"(value), "Nd"(port));
+}
+
 #endif

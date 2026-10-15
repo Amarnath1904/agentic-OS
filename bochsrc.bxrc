@@ -10,7 +10,7 @@ floppy_bootsig_check: disabled=0
 floppya: type=1_44
 # no floppyb
 ata0: enabled=true, ioaddr1=0x1f0, ioaddr2=0x3f0, irq=14
-ata0-master: type=disk, path="C:\Users\pande\OneDrive\Desktop\project\agentic-OS\boot.img", mode=flat, cylinders=1, heads=1, spt=63, sect_size=512, model="Generic 1234", biosdetect=auto, translation=auto
+ata0-master: type=disk, path="C:\Users\pande\OneDrive\Desktop\agent OS\boot.img", mode=flat, cylinders=2, heads=1, spt=63, sect_size=512, model="Generic 1234", biosdetect=auto, translation=auto
 ata0-slave: type=none
 ata1: enabled=true, ioaddr1=0x170, ioaddr2=0x370, irq=15
 ata1-master: type=none
@@ -26,7 +26,7 @@ optramimage2: file=none
 optramimage3: file=none
 optramimage4: file=none
 pci: enabled=1, chipset=i440fx, slot1=none, slot2=none, slot3=none, slot4=none, slot5=none
-ne2k: enabled=1, ioaddr=0x300, irq=11, mac=b0:c4:20:00:00:01, ethmod=vnet
+ne2k: enabled=1, type=isa, ioaddr=0x300, irq=5, mac=b0:c4:20:00:00:01, ethmod=slirp
 vga: extension=vbe, update_freq=10, realtime=1, ddc=builtin, vbe_memsize=16
 cpu: count=1, ips=4000000, model=corei7_haswell_4770, reset_on_triple_fault=1, cpuid_limit_winnt=0, ignore_bad_msrs=1, mwait_is_nop=0
 print_timestamps: enabled=0
@@ -35,7 +35,7 @@ magic_break: enabled=1 0x8
 port_e9_hack: enabled=false, all_rings=false
 iodebug: all_rings=0
 private_colormap: enabled=0
-clock: sync=none, time0=local, rtc_sync=0
+clock: sync=realtime, time0=local, rtc_sync=0
 # no cmosimage
 log: -
 logprefix: %t%e%d

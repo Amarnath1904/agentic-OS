@@ -13,6 +13,7 @@
 #include "fs/ramfs/ramfs.h"
 #include "shell/shell.h"
 #include "net/net.h"
+#include "net/timer.h"
 
 /* Forward declarations */
 void kernel_loop(void);
@@ -83,6 +84,7 @@ void init_interrupts(void)
     idt_flush();
     
     pic_init();
+    net_timer_init();
 }
 
 /* ============================================

@@ -15,7 +15,7 @@
 start:
     ; Initialize segments and stack
     xor ax, ax   
-    mo   v ds, ax
+    mov ds, ax
     mov es, ax  
     mov ss, ax
     mov sp, 0x7c00

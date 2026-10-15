@@ -16,6 +16,13 @@ typedef struct {
 
 static ramfs_entry_t g_entries[RAMFS_MAX_ENTRIES];
 
+u32 ramfs_free_entries(void)
+{
+    u32 count = 0;
+    for (u32 i = 0; i < RAMFS_MAX_ENTRIES; i++) if (!g_entries[i].used) count++;
+    return count;
+}
+
 static void entry_clear(ramfs_entry_t* e)
 {
     if (e->data != NULL) {

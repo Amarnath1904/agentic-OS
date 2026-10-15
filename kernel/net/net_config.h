@@ -2,11 +2,11 @@
 #define NET_CONFIG_H
 
 /*
- * Edit these to match your Bochs vnet / tap network.
- * Bochs "vnet" often uses a private subnet; see Bochs docs for your ethmod.
+ * Defaults match Bochs/QEMU slirp (user-mode host networking).
+ * The host Gemini bridge is reached through slirp's 10.0.2.2 alias.
  */
 #define NE2K_IO_BASE   0x300
-#define NE2K_IRQ       11
+#define NE2K_IRQ       5
 
 /* Must match bochsrc ne2k mac= (same order on wire) */
 #define NET_MAC_0 0xB0
@@ -34,5 +34,12 @@
 
 #define TCP_PROBE_DEFAULT_PORT  53
 #define TCP_PROBE_TIMEOUT_SPINS 8000000u
+
+/* Host loopback via Bochs/QEMU slirp. API credentials stay on the host. */
+#define AI_BRIDGE_A 10
+#define AI_BRIDGE_B 0
+#define AI_BRIDGE_C 2
+#define AI_BRIDGE_D 2
+#define AI_BRIDGE_PORT 8765
 
 #endif

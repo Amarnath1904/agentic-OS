@@ -34,7 +34,7 @@ void pic_init(void)
     outb(PIC1_DATA, 0x01);
     outb(PIC2_DATA, 0x01);
 
-    /* IRQ1 keyboard only on master; slave fully masked */
-    outb(PIC1_DATA, 0xFD);
+    /* IRQ0 deadline timer and IRQ1 keyboard; NIC remains polled. */
+    outb(PIC1_DATA, 0xFC);
     outb(PIC2_DATA, 0xFF);
 }

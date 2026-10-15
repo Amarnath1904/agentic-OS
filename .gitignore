@@ -1,0 +1,8 @@
+__pycache__/
+node_modules/
+*.pyc
+.build-tools/
+.build-test/
+.env
+.env.*
+!.env.example

@@ -395,8 +395,9 @@ bool tcp_probe_host_port(u32 dst_ip_nbo, u16 dst_port_host)
     u32 gw = net_gw_ipv4();
     u32 nh_ip = dst_ip_nbo;
     u8 nh_mac[6];
-    u16 dst_port_be = net_htons(dst_port_host);
-    u16 src_port_be = net_htons(0xC000u);
+    /* Builders serialize these numeric values explicitly, so do not swap. */
+    u16 dst_port_be = dst_port_host;
+    u16 src_port_be = 0xC000u;
     u32 isn = 0x12345678u;
     u32 spin;
     u32 srv_seq;
@@ -418,8 +419,8 @@ bool tcp_probe_host_port(u32 dst_ip_nbo, u16 dst_port_host)
                 s_rx,
                 r,
                 dst_ip_nbo,
-                dst_port_be,
                 src_port_be,
+                dst_port_be,
                 &srv_seq,
                 &ack_to_us)) {
             if (ack_to_us != isn + 1u) {

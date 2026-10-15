@@ -6,6 +6,7 @@
 #include "kernel.h"
 #include "io.h"
 #include "drivers/keyboard.h"
+#include "net/timer.h"
 
 extern void panic(const char* message);
 
@@ -56,8 +57,7 @@ void isr_handler(interrupt_frame_t* frame)
         
         switch (irq) {
             case 0:
-                /* Timer interrupt */
-                /* Handled by scheduler */
+                net_timer_tick();
                 break;
             case 1:
                 /* Keyboard interrupt */

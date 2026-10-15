@@ -14,6 +14,7 @@ typedef enum {
 typedef void (*ramfs_list_emit_fn)(const char* name, void* ctx);
 
 void ramfs_init(void);
+u32 ramfs_free_entries(void);
 i32 ramfs_mkdir(const char* abs_path);
 i32 ramfs_create_empty_file(const char* abs_path);
 i32 ramfs_write_file(const char* abs_path, const void* buf, u32 len);

@@ -84,7 +84,15 @@ i686-elf-gcc -c kernel/shell/shell.c -o kernel/shell/shell.o \
     -std=gnu99 -ffreestanding -O2 -Wall -Wextra -fno-stack-protector \
     -I. -Ikernel
 
-# Networking (NE2000 + minimal TCP probe)
+# Networking (NE2000 + UDP AI transport + diagnostic TCP probe)
+i686-elf-gcc -c kernel/shell/nono.c -o kernel/shell/nono.o \
+    -std=gnu99 -ffreestanding -O2 -Wall -Wextra -fno-stack-protector \
+    -I. -Ikernel
+for module in timer udp ai; do
+    i686-elf-gcc -c kernel/net/$module.c -o kernel/net/$module.o \
+        -std=gnu99 -ffreestanding -O2 -Wall -Wextra -fno-stack-protector \
+        -I. -Ikernel
+done
 i686-elf-gcc -c kernel/net/net.c -o kernel/net/net.o \
     -std=gnu99 -ffreestanding -O2 -Wall -Wextra -fno-stack-protector \
     -I. -Ikernel
@@ -152,10 +160,14 @@ i686-elf-gcc -T linker.ld -o kernel.elf -ffreestanding -O2 -nostdlib \
     kernel/fs/ramfs/path.o \
     kernel/fs/ramfs/ramfs.o \
     kernel/shell/shell.o \
+    kernel/shell/nono.o \
     kernel/net/net.o \
     kernel/net/ne2k.o \
     kernel/net/ipv4.o \
     kernel/net/tcp_probe.o \
+    kernel/net/timer.o \
+    kernel/net/udp.o \
+    kernel/net/ai.o \
     kernel/memory/memory.o \
     kernel/memory/paging.o \
     kernel/scheduler/scheduler.o \
@@ -176,6 +188,10 @@ KERNEL_SECTORS=$(( (KERNEL_BYTES + 511) / 512 ))
 if [ "$KERNEL_SECTORS" -lt 1 ]; then
     KERNEL_SECTORS=1
 fi
+if [ "$KERNEL_SECTORS" -gt 127 ]; then
+    echo "Error: kernel exceeds the bootloader's 127-sector EDD read limit"
+    exit 1
+fi
 echo "Building bootloader (load $KERNEL_BYTES byte kernel = $KERNEL_SECTORS sectors)..."
 nasm -f bin -o boot.bin -DKERNEL_SECTORS=$KERNEL_SECTORS boot.asm
 
@@ -183,7 +199,7 @@ nasm -f bin -o boot.bin -DKERNEL_SECTORS=$KERNEL_SECTORS boot.asm
 rm -f boot.img
 
 # Ensure minimum size for geometry 1/1/63 (63 sectors = 32256 bytes)
-MIN_SIZE=32256
+MIN_SIZE=$(( ((KERNEL_SECTORS + 1 + 62) / 63) * 63 * 512 ))
 
 # Create disk image by concatenating bootloader and kernel
 echo "Creating disk image..."
